@@ -1,0 +1,155 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Companies (Tenants)
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  emailDomain String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users     User[]
+  forms     Form[]
+  workflows Workflow[]
+  submissions Submission[]
+  workflowExecutions WorkflowExecution[]
+
+  @@map("companies")
+}
+
+// Users
+model User {
+  id        String   @id @default(cuid())
+  email     String
+  passwordHash String
+  role      Role     @default(VIEWER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String
+  formsCreated Form[] @relation("createdBy")
+
+  @@unique([companyId, email])
+  @@index([companyId])
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+  VIEWER
+  APPROVER
+}
+
+// Forms
+model Form {
+  id        String   @id @default(cuid())
+  name      String
+  description String?
+  schema    Json     // JSONB - stores field definitions
+  isPublished Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String
+  createdBy User?    @relation("createdBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdById String?
+  workflows Workflow[]
+  submissions Submission[]
+
+  @@index([companyId])
+  @@index([createdById])
+  @@map("forms")
+}
+
+// Workflows
+model Workflow {
+  id        String   @id @default(cuid())
+  name      String
+  definition Json    // JSONB - stores workflow steps and connections
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  form      Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId    String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String
+  executions WorkflowExecution[]
+
+  @@index([formId])
+  @@index([companyId])
+  @@map("workflows")
+}
+
+// Submissions (Form Responses)
+model Submission {
+  id        String   @id @default(cuid())
+  data      Json     // JSONB - stores form response data
+  workflowStatus WorkflowStatus @default(PENDING)
+  submittedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  form      Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId    String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String
+  execution WorkflowExecution?
+
+  @@index([formId])
+  @@index([companyId])
+  @@map("submissions")
+}
+
+enum WorkflowStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+// Workflow Executions (Track workflow progress)
+model WorkflowExecution {
+  id        String   @id @default(cuid())
+  currentStep String?
+  snapshot  Json?    // Snapshot of the workflow definition at execution time
+  status    ExecutionStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  workflow  Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  workflowId String
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId String @unique
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String
+
+  @@index([workflowId])
+  @@index([submissionId])
+  @@index([companyId])
+  @@map("workflow_executions")
+}
+
+enum ExecutionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
