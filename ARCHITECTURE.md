@@ -16,6 +16,7 @@ Sistema SaaS multi-tenant para criar forms e workflows com autenticação, autor
 ### Backend
 - **Node.js + Express** para API REST
 - **PostgreSQL** para persistência
+- **Redis** para caching e queues (com BullMQ)
 - **JWT** para autenticação
 - **bcryptjs** para hash de senhas
 
@@ -196,34 +197,34 @@ workflow_executions
 └──────────────────────────────────────────────────────────┘
 ```
 
-## Roles e Permissões
+## Roles and Permissions
 
-| Ação | Admin | Editor | Viewer | Approver |
+| Action | Admin | Editor | Viewer | Approver |
 |------|-------|--------|--------|----------|
-| Criar Form | ✓ | ✓ | ✗ | ✗ |
-| Editar Form | ✓ | ✓ | ✗ | ✗ |
-| Deletar Form | ✓ | ✗ | ✗ | ✗ |
-| Criar Workflow | ✓ | ✓ | ✗ | ✗ |
-| Editar Workflow | ✓ | ✓ | ✗ | ✗ |
-| Deletar Workflow | ✓ | ✗ | ✗ | ✗ |
-| Ver Submissions | ✓ | ✓ | ✓ | ✓ |
-| Aprovar Workflow | ✓ | ✗ | ✗ | ✓ |
-| Deletar Submission | ✓ | ✗ | ✗ | ✗ |
+| Create Form | ✓ | ✓ | ✗ | ✗ |
+| Edit Form | ✓ | ✓ | ✗ | ✗ |
+| Delete Form | ✓ | ✗ | ✗ | ✗ |
+| Create Workflow | ✓ | ✓ | ✗ | ✗ |
+| Edit Workflow | ✓ | ✓ | ✗ | ✗ |
+| Delete Workflow | ✓ | ✗ | ✗ | ✗ |
+| View Submissions | ✓ | ✓ | ✓ | ✓ |
+| Approve Workflow | ✓ | ✗ | ✗ | ✓ |
+| Delete Submission | ✓ | ✗ | ✗ | ✗ |
 
-## Fluxo de Criação de Form
+## Form Creation Flow
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  1. User acessa /forms (Form Builder)                   │
-│     Frontend carrega localStorage (vazio no início)     │
+│  1. User accesses /forms (Form Builder)                 │
+│     Frontend loads localStorage (empty at first)        │
 └────────────────┬────────────────────────────────────────┘
                  │
                  ▼
 ┌─────────────────────────────────────────────────────────┐
-│  2. User cria form com drag-and-drop                    │
-│     - Adiciona campos                                    │
-│     - Configura validação                               │
-│     - Define conditional logic                          │
+│  2. User creates form with drag-and-drop                │
+│     - Adds fields                                       │
+│     - Configures validation                             │
+│     - Defines conditional logic                         │
 └────────────────┬────────────────────────────────────────┘
                  │
                  ▼
@@ -239,29 +240,29 @@ workflow_executions
                  │
                  ▼
 ┌─────────────────────────────────────────────────────────┐
-│  4. Backend valida e salva                              │
-│     - Verificar role (não viewer)                       │
-│     - Validar schema                                    │
-│     - Inserir em database                               │
-│     - Retornar form com ID                              │
+│  4. Backend validates and saves                         │
+│     - Check role (not viewer)                           │
+│     - Validate schema                                   │
+│     - Insert into database                              │
+│     - Return form with ID                               │
 └────────────────┬────────────────────────────────────────┘
                  │
                  ▼
 ┌─────────────────────────────────────────────────────────┐
-│  5. Frontend atualiza UI                                │
-│     - Mostrar toast "Form saved"                        │
-│     - Armazenar form ID                                 │
-│     - Permitir criar workflow                           │
+│  5. Frontend updates UI                                 │
+│     - Show "Form saved" toast                           │
+│     - Store form ID                                     │
+│     - Allow creating a workflow                         │
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Fluxo de Submissão de Form
+## Form Submission Flow
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  1. User acessa /preview/{formId}                       │
+│  1. User accesses /preview/{formId}                     │
 │     Frontend: GET /api/forms/{formId}                   │
-│     Carrega schema do form                              │
+│     Loads form schema                                   │
 └────────────────┬────────────────────────────────────────┘
                  │
                  ▼
@@ -283,28 +284,27 @@ workflow_executions
                  │
                  ▼
 ┌─────────────────────────────────────────────────────────┐
-│  4. Backend valida e salva                              │
-│     - Validar dados contra schema                       │
-│     - Inserir em submissions table                      │
-│     - Verificar se há workflow associado                │
-│     - Se sim, iniciar workflow execution                │
+│  4. Backend validates and saves                         │
+│     - Validate data against schema                      │
+│     - Insert into submissions table                     │
+│     - Check if there is an associated workflow          │
+│     - If so, start workflow execution                   │
 └────────────────┬────────────────────────────────────────┘
                  │
                  ▼
 ┌─────────────────────────────────────────────────────────┐
-│  5. Frontend mostra sucesso                             │
-│     - Toast "Submission received"                       │
-│     - Limpar form                                       │
-│     - Redirecionar para home                            │
+│  5. Frontend shows success                              │
+│     - "Submission received" toast                       │
+│     - Clear form                                        │
+│     - Redirect to home                                  │
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Escalabilidade
+## Scalability
 
-### Índices de Performance
+### Performance Indexes
 
 ```sql
--- Queries rápidas por company
 CREATE INDEX idx_users_company_id ON users(company_id);
 CREATE INDEX idx_forms_company_id ON forms(company_id);
 CREATE INDEX idx_workflows_company_id ON workflows(company_id);

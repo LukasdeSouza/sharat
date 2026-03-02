@@ -1,6 +1,6 @@
 # System Overview - Form Workflow Builder
 
-## 🏗️ Arquitetura Geral
+## 🏗️ General Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -73,9 +73,9 @@
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-## 🔄 Fluxo de Dados
+## 🔄 Data Flow
 
-### 1. Autenticação
+### 1. Auth
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -96,18 +96,18 @@
 │ Backend                                                      │
 │ 1. Validar input                                            │
 │ 2. Hash password                                            │
-│ 3. Criar company                                            │
-│ 4. Criar user com role 'admin'                             │
-│ 5. Gerar JWT token                                          │
+│ 3. Create company                                            │
+│ 4. Create user with  role 'admin'                             │
+│ 5. Generate JWT token                                          │
 └────────────────┬────────────────────────────────────────────┘
                  │
-                 │ 3. Retorna token + user
+                 │ 3. Return token + user
                  ▼
 ┌─────────────────────────────────────────────────────────────┐
 │ Frontend                                                     │
-│ 1. Armazena token em localStorage                           │
-│ 2. Redireciona para /forms                                  │
-│ 3. Inclui token em Authorization header                     │
+│ 1. Store the token in localStorage                           │
+│ 2. Redirect to /forms                                  │
+│ 3. Include token in Authorization header                     │
 └─────────────────────────────────────────────────────────────┘
 ```
 

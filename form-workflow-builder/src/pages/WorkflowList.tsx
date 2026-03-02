@@ -118,7 +118,7 @@ export default function WorkflowList() {
               </div>
               <p className="text-lg text-slate-500 max-w-2xl font-light  leading-relaxed">Design, automate, and monitor your process workflows.</p>
             </div>
-            {(userRole === 'ADMIN' || userRole === 'admin') && (
+            {/* {(userRole === 'ADMIN' || userRole === 'admin') && ( */}
               <button
                 onClick={() => navigate('/workflows/designer')}
                 className="flex items-center justify-center gap-2 px-6 py-3 bg-black text-white rounded-xl hover:bg-slate-800 transition-all font-medium shadow-lg active:scale-95 hover:scale-95"
@@ -126,7 +126,7 @@ export default function WorkflowList() {
                 <BiPlus className="w-5 h-5" />
                 New Workflow
               </button>
-            )}
+            {/* )} */}
           </div>
         </div>
       </div>
