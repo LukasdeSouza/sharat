@@ -58,6 +58,46 @@ npm start
 
 O servidor estará disponível em `http://localhost:3001`
 
+## Deploy no Vercel (serverless)
+
+O backend está pronto para rodar na Vercel como **serverless** (Express como uma única função).
+
+### 1. Configurar o projeto na Vercel
+
+- Conecte o repositório no [Vercel Dashboard](https://vercel.com/new).
+- Defina o **Root Directory** como `backend` (se o repo for a raiz do monorepo).
+- Ou faça o deploy apenas da pasta `backend`: `cd backend && vercel`.
+
+### 2. Variáveis de ambiente
+
+No projeto Vercel, em **Settings → Environment Variables**, configure:
+
+| Variável       | Descrição                          |
+|----------------|------------------------------------|
+| `DATABASE_URL` | Connection string do PostgreSQL (ex.: Neon, Supabase) |
+| `JWT_SECRET`   | Chave secreta para assinar os JWTs |
+
+### 3. Build
+
+O script `npm run build` executa `prisma generate`. A Vercel roda esse comando automaticamente. As migrations devem ser aplicadas no banco de produção antes (por exemplo com `npx prisma migrate deploy` em um script de post-deploy ou manualmente).
+
+### 4. URLs
+
+Após o deploy, a API ficará em `https://seu-projeto.vercel.app`:
+
+- Health: `GET https://seu-projeto.vercel.app/health`
+- Auth: `POST https://seu-projeto.vercel.app/api/auth/login`
+- Demais rotas: `/api/forms`, `/api/workflows`, etc.
+
+### Desenvolvimento local com Vercel CLI
+
+```bash
+cd backend
+vercel dev
+```
+
+Recomenda-se usar um PostgreSQL acessível pela internet (ex.: Neon, Supabase) com `DATABASE_URL` no `.env` para o `vercel dev` funcionar contra o mesmo banco.
+
 ## API Endpoints
 
 ### Autenticação

@@ -24,6 +24,7 @@ describe('LocalStorageService', () => {
           backgroundColor: '#ffffff',
           fontFamily: 'Arial'
         },
+        isPublished: false,
         createdAt: new Date('2024-01-01'),
         updatedAt: new Date('2024-01-01')
       };
@@ -54,6 +55,7 @@ describe('LocalStorageService', () => {
           backgroundColor: '#ffffff',
           fontFamily: 'Arial'
         },
+        isPublished: false,
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -69,6 +71,7 @@ describe('LocalStorageService', () => {
           backgroundColor: '#000000',
           fontFamily: 'Arial'
         },
+        isPublished: false,
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -94,6 +97,7 @@ describe('LocalStorageService', () => {
           backgroundColor: '#ffffff',
           fontFamily: 'Arial'
         },
+        isPublished: false,
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -120,6 +124,7 @@ describe('LocalStorageService', () => {
           backgroundColor: '#ffffff',
           fontFamily: 'Arial'
         },
+        isPublished: false,
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -270,6 +275,7 @@ describe('LocalStorageService', () => {
           backgroundColor: '#ffffff',
           fontFamily: 'Arial'
         },
+        isPublished: false,
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -336,6 +342,7 @@ describe('LocalStorageService', () => {
           backgroundColor: '#ffffff',
           fontFamily: 'Arial'
         },
+        isPublished: false,
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -371,6 +378,7 @@ describe('LocalStorageService', () => {
           backgroundColor: '#ffffff',
           fontFamily: 'Arial'
         },
+        isPublished: false,
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -408,6 +416,7 @@ describe('LocalStorageService', () => {
           backgroundColor: '#ffffff',
           fontFamily: 'Arial'
         },
+        isPublished: false,
         createdAt: new Date(),
         updatedAt: new Date()
       };

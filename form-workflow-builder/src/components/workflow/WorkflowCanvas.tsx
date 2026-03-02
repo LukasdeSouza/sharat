@@ -108,6 +108,7 @@ export default function WorkflowCanvas({
   };
 
   const handleStepMouseUp = (e: React.MouseEvent, stepId: string) => {
+    console.log(e)
     if (tempConnection && tempConnection.fromStepId !== stepId) {
       onConnectionCreate(tempConnection.fromStepId, stepId);
     }
@@ -125,6 +126,7 @@ export default function WorkflowCanvas({
       transform: '',
       condition: '',
       webhook: '',
+      action: ''
     };
     return icons[type];
   };
@@ -136,6 +138,7 @@ export default function WorkflowCanvas({
       transform: 'bg-purple-100 border-purple-300',
       condition: 'bg-yellow-100 border-yellow-300',
       webhook: 'bg-orange-100 border-orange-300',
+      action: 'bg-slate-200 border-slate-500'
     };
     return colors[type];
   };

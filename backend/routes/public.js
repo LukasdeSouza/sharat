@@ -71,6 +71,12 @@ router.post('/submit/:formId', async (req, res) => {
                 data,
                 form: { connect: { id: formId } },
                 company: { connect: { id: form.companyId } },
+                auditLogs: {
+                    create: {
+                        action: 'SUBMITTED',
+                        details: 'Public submission'
+                    }
+                }
             },
         });
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { FormSchema } from '../types';
 import { workflowsService } from '../services/WorkflowsService';
 import { formsService } from '../services/FormsService';
+import { authService } from '../services/AuthService';
 import { BiTrash, BiPlus, BiEdit, BiSearch, BiFilterAlt, BiGitBranch, BiChevronLeft, BiBox } from 'react-icons/bi';
 import { useToast, ToastContainer } from '../components/Toast';
 import { MdBlurCircular } from 'react-icons/md';
@@ -24,9 +25,21 @@ export default function WorkflowList() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFormId, setSelectedFormId] = useState<'all' | string>('all');
   const [forms, setForms] = useState<FormSchema[]>([]);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
+    const loadUser = async () => {
+      let user = await authService.getCurrentUser();
+      if (!user) {
+        const stored = localStorage.getItem('user');
+        if (stored) {
+          try { user = JSON.parse(stored); } catch (e) {}
+        }
+      }
+      if (user) setUserRole(user.role);
+    };
+    loadUser();
   }, []);
 
   const loadData = async () => {
@@ -97,19 +110,23 @@ export default function WorkflowList() {
                 <BiChevronLeft className="w-4 h-4" />
                 Back to Dashboard
               </button>
-              <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-                <BiGitBranch className="text-slate-400" />
-                Workflow Strategies
-              </h1>
-              <p className="text-slate-500 mt-2">Design, automate, and monitor your process workflows.</p>
+              <div className='flex flex-row items-baseline gap-2'>
+                <BiGitBranch className="text-slate-400" size={35}/>
+                <h1 className="text-4xl sm:text-5xl font-bold text-notion-text mb-3 tracking-tight">
+                  Workflow Strategies
+                </h1>
+              </div>
+              <p className="text-lg text-slate-500 max-w-2xl font-light  leading-relaxed">Design, automate, and monitor your process workflows.</p>
             </div>
-            <button
-              onClick={() => navigate('/workflows/designer')}
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-black text-white rounded-xl hover:bg-slate-800 transition-all font-medium shadow-lg active:scale-95 hover:scale-95"
-            >
-              <BiPlus className="w-5 h-5" />
-              New Workflow
-            </button>
+            {(userRole === 'ADMIN' || userRole === 'admin') && (
+              <button
+                onClick={() => navigate('/workflows/designer')}
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-black text-white rounded-xl hover:bg-slate-800 transition-all font-medium shadow-lg active:scale-95 hover:scale-95"
+              >
+                <BiPlus className="w-5 h-5" />
+                New Workflow
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -188,20 +205,24 @@ export default function WorkflowList() {
                     </span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => navigate(`/workflows/designer?id=${workflow.id}&formId=${workflow.formId}`)}
-                      className="p-2 text-slate-400 hover:text-black hover:bg-slate-100 rounded-lg transition-all"
-                      title="Edit Strategy"
-                    >
-                      <BiEdit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteWorkflow(workflow.id)}
-                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                      title="Delete"
-                    >
-                      <BiTrash className="w-4 h-4" />
-                    </button>
+                    {(userRole === 'ADMIN' || userRole === 'admin') && (
+                      <>
+                        <button
+                          onClick={() => navigate(`/workflows/designer?id=${workflow.id}&formId=${workflow.formId}`)}
+                          className="p-2 text-slate-400 hover:text-black hover:bg-slate-100 rounded-lg transition-all"
+                          title="Edit Strategy"
+                        >
+                          <BiEdit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteWorkflow(workflow.id)}
+                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                          title="Delete"
+                        >
+                          <BiTrash className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

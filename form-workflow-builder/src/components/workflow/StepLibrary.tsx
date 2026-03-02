@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
 import type { StepType } from '../../types';
 import { BsCheck2 } from 'react-icons/bs';
-import { BiLink, BiNotification } from 'react-icons/bi';
-import { MdChangeCircle } from 'react-icons/md';
-import { GiHalfLog } from 'react-icons/gi';
+import { BiLink, BiNotification, BiQuestionMark } from 'react-icons/bi';
+// import { MdChangeCircle, MdChangeHistory } from 'react-icons/md';
+// import { GiHalfLog } from 'react-icons/gi';
 
 interface StepTypeInfo {
   type: StepType;
@@ -15,8 +15,8 @@ interface StepTypeInfo {
 const stepTypes: StepTypeInfo[] = [
   { type: 'approval', label: 'Approval', icon: <BsCheck2/>, description: 'Require approval from user' },
   { type: 'notification', label: 'Notification', icon: <BiNotification/>, description: 'Send email notification' },
-  { type: 'transform', label: 'Transform', icon: <MdChangeCircle/>, description: 'Transform data' },
-  { type: 'condition', label: 'Condition', icon: <GiHalfLog/>, description: 'Conditional branching' },
+  // { type: 'transform', label: 'Transform', icon: <MdChangeHistory/>, description: 'Transform data' },
+  { type: 'condition', label: 'Condition', icon: <BiQuestionMark/>, description: 'Conditional branching' },
   { type: 'webhook', label: 'Webhook', icon: <BiLink/>, description: 'Call external API' },
 ];
 

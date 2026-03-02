@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import type { FieldDefinition, FieldType } from '../../types';
-import { FcEmptyTrash } from 'react-icons/fc';
 import { PiEmpty } from 'react-icons/pi';
 import { BiTrash } from 'react-icons/bi';
 

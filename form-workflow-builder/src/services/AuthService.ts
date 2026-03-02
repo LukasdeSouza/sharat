@@ -4,7 +4,7 @@ export interface User {
   id: string;
   email: string;
   company_id: string;
-  role: 'ADMIN' | 'EDITOR' | 'VIEWER' | 'APPROVER';
+  role: 'ADMIN' | 'EDITOR' | 'VIEWER' | 'APPROVER' | 'admin';
 }
 
 export interface AuthResponse {

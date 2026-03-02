@@ -44,6 +44,15 @@ export const workflowEngine = {
                 data: { currentStep: stepId },
             });
 
+            // Log the step processing
+            await prisma.auditLog.create({
+                data: {
+                    submissionId: execution.submissionId,
+                    action: 'WORKFLOW_STEP',
+                    details: `Processed step: ${step.name || step.type}`
+                }
+            });
+
             // Handle based on step type
             switch (step.type) {
                 case 'notification':
@@ -106,42 +115,47 @@ export const workflowEngine = {
     },
 
     async handleApprovalStep(execution, step) {
-        const approverEmail = step.config?.approverEmail;
+        const approverId = step.config?.approverId;
         const formName = execution.submission.form.name;
-        const stepName = step.name || 'Approval Request';
-        const submissionData = execution.submission.data;
-        // Approvals can also have a custom instruction/template if we want
-        const template = step.config?.template;
 
-        if (approverEmail && /^\S+@\S+\.\S+$/.test(approverEmail)) {
-            await emailService.sendWorkflowStepNotification(
-                approverEmail,
-                stepName,
-                formName,
-                execution.submissionId,
-                submissionData,
-                template
-            );
+        // Ensure submission status is PENDING while waiting for approval
+        await prisma.submission.update({
+            where: { id: execution.submissionId },
+            data: { workflowStatus: 'PENDING' }
+        });
+
+        // Create in-app notification for the approver
+        if (approverId) {
+            await prisma.notification.create({
+                data: {
+                    userId: approverId,
+                    title: 'Approval Required',
+                    message: `Submission for "${formName}" requires your approval.`,
+                    link: `/my-tasks`,
+                }
+            });
         }
     },
 
     async handleConditionStep(execution, step) {
-        // Basic evaluation for now (could use safer eval logic)
-        const condition = step.config?.condition;
+        const { fieldId, operator, value, truePath, falsePath } = step.config || {};
         const submissionData = execution.submission.data;
 
         let result = false;
-        try {
-            // In a real app, use a sandboxed evaluator like 'vm' or 'jexl'
-            // For this demo, we'll implement simple key mapping
-            const context = submissionData;
-            // Simple eval placeholder
-            result = true; // Defaulting to true for demo
-        } catch (e) {
-            console.error('Condition evaluation error:', e);
+        if (fieldId && submissionData.hasOwnProperty(fieldId)) {
+            const fieldValue = submissionData[fieldId];
+            
+            switch (operator) {
+                case 'equals': result = fieldValue == value; break;
+                case 'notEquals': result = fieldValue != value; break;
+                case 'contains': result = String(fieldValue).includes(value); break;
+                case 'greaterThan': result = Number(fieldValue) > Number(value); break;
+                case 'lessThan': result = Number(fieldValue) < Number(value); break;
+                default: result = false;
+            }
         }
 
-        const nextStepId = result ? step.config?.truePath : step.config?.falsePath;
+        const nextStepId = result ? truePath : falsePath;
         if (nextStepId) {
             await this.processStep(execution.id, nextStepId);
         } else {
@@ -162,11 +176,11 @@ export const workflowEngine = {
     async moveToNextStep(execution, currentStepId) {
         const definition = execution.snapshot || execution.workflow.definition;
         const connection = (definition.connections || []).find(
-            (c) => c.sourceId === currentStepId
+            (c) => c.fromStepId === currentStepId
         );
 
-        if (connection && connection.targetId) {
-            await this.processStep(execution.id, connection.targetId);
+        if (connection && connection.toStepId) {
+            await this.processStep(execution.id, connection.toStepId);
         } else {
             // No next step, finish
             await this.processStep(execution.id, 'finish_this_execution');

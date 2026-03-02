@@ -1,7 +1,28 @@
 import express from 'express';
 import { prisma } from '../server.js';
+import { generateFormFields } from '../services/formAiService.js';
 
 const router = express.Router();
+
+// Generate form fields with AI (must be before /:id)
+router.post('/generate', async (req, res) => {
+  try {
+    const { prompt } = req.body;
+    const { role } = req.user;
+
+    if (role === 'VIEWER') {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    const { fields, suggestedName } = await generateFormFields(prompt || '');
+    res.json({ fields, suggestedName });
+  } catch (error) {
+    console.error('Generate form AI error:', error);
+    res.status(500).json({
+      error: error.message?.startsWith('AI service') ? error.message : 'Failed to generate form',
+    });
+  }
+});
 
 // Get all forms for company
 router.get('/', async (req, res) => {

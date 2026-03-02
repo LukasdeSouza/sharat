@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
-import type { WorkflowStep, StepConfig } from '../../types';
+import type { WorkflowStep, StepConfig, User, FieldDefinition } from '../../types';
 
 interface StepConfigPanelProps {
   step: WorkflowStep | null;
+  users: User[];
+  fields?: FieldDefinition[];
   onStepUpdate: (updatedStep: WorkflowStep) => void;
   onClose: () => void;
 }
 
 export default function StepConfigPanel({
   step,
+  users,
+  fields = [],
   onStepUpdate,
   onClose,
 }: StepConfigPanelProps) {
@@ -51,13 +55,13 @@ export default function StepConfigPanel({
     );
   }
 
-  const handleUpdate = () => {
-    onStepUpdate({
-      ...step,
-      name,
-      config,
-    });
-  };
+  // const handleUpdate = () => {
+  //   onStepUpdate({
+  //     ...step,
+  //     name,
+  //     config,
+  //   });
+  // };
 
   const updateConfig = (key: keyof StepConfig, value: any) => {
     const newConfig = { ...config, [key]: value };
@@ -81,16 +85,21 @@ export default function StepConfigPanel({
   const renderApprovalConfig = () => (
     <>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Approver Email
+        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
+          Assign Approver
         </label>
-        <input
-          type="email"
-          value={config.approverEmail || ''}
-          onChange={(e) => updateConfig('approverEmail', e.target.value)}
-          placeholder="approver@example.com"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent"
-        />
+        <select
+          value={config.approverId || ''}
+          onChange={(e) => updateConfig('approverId', e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent bg-white text-sm"
+        >
+          <option value="">Select a user...</option>
+          {users.map(user => (
+            <option key={user.id} value={user.id}>
+              {user.email} ({user.role})
+            </option>
+          ))}
+        </select>
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -145,16 +154,44 @@ export default function StepConfigPanel({
   const renderConditionConfig = () => (
     <>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Condition Expression
+        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
+          If Field
         </label>
-        <input
-          type="text"
-          value={config.condition || ''}
-          onChange={(e) => updateConfig('condition', e.target.value)}
-          placeholder="e.g., amount > 1000"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent"
-        />
+        <select
+          value={config.fieldId || ''}
+          onChange={(e) => updateConfig('fieldId', e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent bg-white text-sm"
+        >
+          <option value="">Select a field...</option>
+          {fields.map(f => (
+            <option key={f.id} value={f.id}>{f.label}</option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
+          Condition
+        </label>
+        <div className="flex gap-2">
+          <select
+            value={config.operator || 'equals'}
+            onChange={(e) => updateConfig('operator', e.target.value)}
+            className="w-1/3 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent bg-white text-sm"
+          >
+            <option value="equals">Equals</option>
+            <option value="notEquals">Not Equals</option>
+            <option value="contains">Contains</option>
+            <option value="greaterThan">&gt;</option>
+            <option value="lessThan">&lt;</option>
+          </select>
+          <input
+            type="text"
+            value={config.value || ''}
+            onChange={(e) => updateConfig('value', e.target.value)}
+            placeholder="Value"
+            className="w-2/3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent text-sm"
+          />
+        </div>
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">

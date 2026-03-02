@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { FormSchema } from '../types';
 import { formsService } from '../services/FormsService';
-import { BiTrash, BiPlus, BiEdit, BiSearch, BiFilterAlt, BiGlobe, BiLockAlt, BiChevronLeft, BiFile } from 'react-icons/bi';
+import { authService } from '../services/AuthService';
+import { usersService } from '../services/UsersService';
+import { BiTrash, BiPlus, BiEdit, BiSearch, BiFilterAlt, BiGlobe, BiLockAlt, BiChevronLeft, BiFile, BiUser } from 'react-icons/bi';
 import { BsEye } from 'react-icons/bs';
 import { useToast, ToastContainer } from '../components/Toast';
 import { MdBlurCircular } from 'react-icons/md';
@@ -14,9 +16,23 @@ export default function FormList() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'published' | 'draft'>('all');
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [userMap, setUserMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     loadForms();
+    const loadUser = async () => {
+      let user = await authService.getCurrentUser();
+      if (!user) {
+        const stored = localStorage.getItem('user');
+        if (stored) {
+          try { user = JSON.parse(stored); } catch (e) {}
+        }
+      }
+      setCurrentUser(user);
+    };
+    loadUser();
+    loadCreators();
   }, []);
 
   const loadForms = async () => {
@@ -28,6 +44,17 @@ export default function FormList() {
       toast.error('Failed to load forms');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCreators = async () => {
+    try {
+      const users = await usersService.getUsers();
+      const map: Record<string, string> = {};
+      users.forEach(u => { map[u.id] = u.email; });
+      setUserMap(map);
+    } catch (err) {
+      // Ignore errors (e.g. if user is not admin and cannot list users)
     }
   };
 
@@ -76,11 +103,13 @@ export default function FormList() {
                 <BiChevronLeft className="w-4 h-4" />
                 Back to Dashboard
               </button>
-              <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-                <BiFile className="text-slate-400" />
-                Form Management
-              </h1>
-              <p className="text-slate-500 mt-2">Manage, edit, and organize your company forms.</p>
+              <div className='flex flex-row items-baseline gap-2'>
+                <BiFile className="text-slate-400" size={35} />
+                <h1 className="text-4xl sm:text-5xl font-bold text-notion-text mb-3 tracking-tight">
+                  Form Management
+                </h1>
+              </div>
+              <p className="text-lg text-slate-500 max-w-2xl font-light  leading-relaxed">Manage, edit, and organize your company forms.</p>
             </div>
             <button
               onClick={() => navigate('/forms/builder')}
@@ -133,7 +162,12 @@ export default function FormList() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredForms.map((form) => (
+            {filteredForms.map((form) => {
+              const isOwner = currentUser && (form as any).createdById === currentUser.id;
+              const isAdmin = currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'admin');
+              const canManage = isOwner || isAdmin;
+
+              return (
               <div
                 key={form.id}
                 className="group bg-white border border-slate-200 rounded-lg p-6 transition-all duration-300 hover:shadow-xl hover:border-slate-300 relative overflow-hidden hover:scale-95"
@@ -148,7 +182,7 @@ export default function FormList() {
                   <div className="flex items-center gap-2">
                     {form.isPublished ? (
                       <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-100">
-                        <BiGlobe className="w-3 h-3" /> Live
+                        <BiGlobe className="w-3 h-3" /> Published
                       </span>
                     ) : (
                       <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-slate-400 bg-slate-50 px-2 py-1 rounded-full border border-slate-100">
@@ -166,9 +200,17 @@ export default function FormList() {
                 </p>
 
                 <div className="mt-6 pt-6 border-t border-slate-50 flex items-center justify-between">
-                  <span className="text-xs text-slate-400 font-medium">
-                    Created {new Date(form.createdAt).toLocaleDateString()}
-                  </span>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-slate-400 font-medium">
+                      {new Date(form.createdAt).toLocaleDateString()}
+                    </span>
+                    <div className="flex items-center gap-1 text-xs text-slate-500" title="Created By">
+                      <BiUser className="w-3 h-3" />
+                      <span className="truncate max-w-[120px]">
+                        {userMap[(form as any).createdById] || 'Unknown'}
+                      </span>
+                    </div>
+                  </div>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => navigate(`/preview/${form.id}`)}
@@ -177,24 +219,28 @@ export default function FormList() {
                     >
                       <BsEye className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => navigate(`/forms/builder?id=${form.id}`)}
-                      className="p-2 text-slate-400 hover:text-black hover:bg-slate-100 rounded-lg transition-all"
-                      title="Edit"
-                    >
-                      <BiEdit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteForm(form.id)}
-                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                      title="Delete"
-                    >
-                      <BiTrash className="w-4 h-4" />
-                    </button>
+                    {canManage && (
+                      <>
+                        <button
+                          onClick={() => navigate(`/forms/builder?id=${form.id}`)}
+                          className="p-2 text-slate-400 hover:text-black hover:bg-slate-100 rounded-lg transition-all"
+                          title="Edit"
+                        >
+                          <BiEdit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteForm(form.id)}
+                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                          title="Delete"
+                        >
+                          <BiTrash className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         )}
       </div>

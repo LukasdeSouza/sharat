@@ -356,7 +356,7 @@ export default function FieldConfigPanel({
                           onClick={() => removeConditionalRule(index)}
                           className="text-gray-400 hover:text-red-500 text-sm"
                         >
-                          🗑️
+                          <BiTrash/>
                         </button>
                       </div>
 

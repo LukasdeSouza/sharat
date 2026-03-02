@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import type { WorkflowStep, WorkflowConnection, StepType, FormSchema } from '../types';
+import type { WorkflowStep, WorkflowConnection, StepType, FormSchema, User } from '../types';
 import { workflowValidationService } from '../services/WorkflowValidationService';
 import { workflowsService } from '../services/WorkflowsService';
 import { formsService } from '../services/FormsService';
+import { usersService } from '../services/UsersService';
 import StepLibrary from '../components/workflow/StepLibrary';
 import WorkflowCanvas from '../components/workflow/WorkflowCanvas';
 import StepConfigPanel from '../components/workflow/StepConfigPanel';
@@ -26,6 +27,7 @@ export default function WorkflowDesigner() {
 
   const [availableForms, setAvailableForms] = useState<FormSchema[]>([]);
   const [selectedFormId, setSelectedFormId] = useState<string>(formIdQuery || '');
+  const [users, setUsers] = useState<User[]>([]);
 
   // Initial Load
   useEffect(() => {
@@ -33,8 +35,12 @@ export default function WorkflowDesigner() {
       try {
         setLoading(true);
         // Load forms for the dropdown
-        const forms = await formsService.getAllForms();
+        const [forms, usersData] = await Promise.all([
+          formsService.getAllForms(),
+          usersService.getUsers()
+        ]);
         setAvailableForms(forms);
+        setUsers(usersData);
 
         if (workflowIdQuery) {
           const w = await workflowsService.getWorkflow(workflowIdQuery);
@@ -201,6 +207,7 @@ export default function WorkflowDesigner() {
   }, [steps, connections]);
 
   const selectedStep = steps.find(s => s.id === selectedStepId) || null;
+  const selectedForm = availableForms.find(f => f.id === selectedFormId);
 
   if (loading) {
     return (
@@ -276,7 +283,7 @@ export default function WorkflowDesigner() {
           </div>
 
           {/* Validation Error Banner */}
-          {validationErrors.length > 0 && (
+          {/* {validationErrors.length > 0 && (
             <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg flex items-start gap-2">
               <div className="text-red-500 mt-0.5">⚠️</div>
               <div className="flex-1">
@@ -287,7 +294,7 @@ export default function WorkflowDesigner() {
                 ))}
               </div>
             </div>
-          )}
+          )} */}
         </div>
       </div>
 
@@ -307,6 +314,8 @@ export default function WorkflowDesigner() {
         />
         <StepConfigPanel
           step={selectedStep}
+          users={users}
+          fields={selectedForm?.fields || []}
           onStepUpdate={handleStepUpdate}
           onClose={() => setSelectedStepId(null)}
         />

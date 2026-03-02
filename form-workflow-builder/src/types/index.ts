@@ -80,6 +80,7 @@ export type StepType =
   | 'notification'
   | 'transform'
   | 'condition'
+  | 'action'
   | 'webhook';
 
 export interface DataTransformation {
@@ -107,8 +108,13 @@ export interface StepConfig {
 
   // Webhook step
   url?: string;
+  value?: string;
   method?: 'GET' | 'POST' | 'PUT';
   headers?: Record<string, string>;
+
+  approverId?: string;
+  fieldId?: string;
+  operator?:string;
 }
 
 export interface WorkflowStep {
@@ -142,6 +148,7 @@ export interface FormSubmission {
   formId: string;
   data: Record<string, any>;
   submittedBy?: string;
+  createdAt?: Date;
   submittedAt: Date;
   workflowId?: string;
 }

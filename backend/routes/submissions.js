@@ -4,6 +4,58 @@ import { workflowEngine } from '../services/workflowEngine.js';
 
 const router = express.Router();
 
+// Get pending tasks for current user
+router.get('/my-tasks', async (req, res) => {
+  try {
+    const { id: userId } = req.user;
+    
+    // Fetch all pending submissions with their workflow definitions
+    const submissions = await prisma.submission.findMany({
+      where: {
+        workflowStatus: 'PENDING',
+        execution: { isNot: null }
+      },
+      include: {
+        form: {
+          select: { name: true, schema: true }
+        },
+        execution: {
+          include: {
+            workflow: true
+          }
+        }
+      },
+      orderBy: { submittedAt: 'desc' }
+    });
+
+    // Filter in-memory to find ones where current user is the approver
+    const myTasks = submissions.filter(submission => {
+      const execution = submission.execution;
+      if (!execution || !execution.workflow) return false;
+
+      const { definition } = execution.workflow;
+      const currentStepId = execution.currentStep;
+      
+      if (!definition || !definition.steps || !currentStepId) return false;
+
+      const currentStep = definition.steps.find(s => s.id === currentStepId);
+      
+      // Check if it's an approval step and assigned to this user
+      return (
+        currentStep && 
+        currentStep.type === 'approval' && 
+        currentStep.config && 
+        currentStep.config.approverId === userId
+      );
+    });
+
+    res.json(myTasks);
+  } catch (error) {
+    console.error('Get my tasks error:', error);
+    res.status(500).json({ error: 'Failed to fetch tasks' });
+  }
+});
+
 // Get submissions for a form
 router.get('/form/:formId', async (req, res) => {
   try {
@@ -80,6 +132,12 @@ router.get('/:id', async (req, res) => {
             workflow: true,
           },
         },
+        auditLogs: {
+          include: {
+            user: { select: { email: true } }
+          },
+          orderBy: { createdAt: 'desc' }
+        }
       },
     });
 
@@ -116,11 +174,79 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ error: 'Form not found' });
     }
 
+    // Check for Workflow
+    const workflow = await prisma.workflow.findFirst({
+      where: { formId: form_id },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    let status = 'PENDING';
+    let currentStepId = null;
+    let executionStatus = 'COMPLETED';
+
+    // Workflow Initialization Logic
+    if (workflow) {
+      const { steps, connections } = workflow.definition;
+      
+      // Find start node (simple heuristic: node with no incoming connections or first in list)
+      // In a real graph, we'd traverse properly. Assuming linear-ish flow for now or first step after start.
+      // Finding the "Start" step (usually type 'start')
+      const startStep = steps.find(s => s.type === 'start') || steps[0];
+      
+      if (startStep) {
+        // Find what the start step connects to
+        const firstConnection = connections.find(c => c.fromStepId === startStep.id);
+        if (firstConnection) {
+          const nextStep = steps.find(s => s.id === firstConnection.toStepId);
+          
+          if (nextStep) {
+            currentStepId = nextStep.id;
+            
+            if (nextStep.type === 'approval') {
+              status = 'PENDING';
+              executionStatus = 'PENDING';
+              
+              // Create Notification if an approver is assigned
+              if (nextStep.config && nextStep.config.approverId) {
+                await prisma.notification.create({
+                  data: {
+                    userId: nextStep.config.approverId,
+                    title: 'New Approval Request',
+                    message: `A new submission for "${form.name}" requires your approval.`,
+                    link: `/submissions?formId=${form_id}`,
+                  }
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+
     const submission = await prisma.submission.create({
       data: {
         data,
+        workflowStatus: status,
         form: { connect: { id: form_id } },
         company: { connect: { id: company_id } },
+        auditLogs: {
+          create: {
+            action: 'SUBMITTED',
+            details: 'Internal submission',
+            userId: req.user.id
+          }
+        },
+        // Create execution record if workflow exists
+        ...(workflow && {
+          execution: {
+            create: {
+              workflowId: workflow.id,
+              companyId: company_id,
+              status: executionStatus, // Simplified status mapping
+              currentStep: currentStepId
+            }
+          }
+        })
       },
     });
 
@@ -161,6 +287,13 @@ router.put('/:id/status', async (req, res) => {
       where: { id },
       data: {
         workflowStatus: workflow_status,
+        auditLogs: {
+          create: {
+            action: workflow_status,
+            details: `Status updated to ${workflow_status}`,
+            userId: req.user.id
+          }
+        }
       },
       include: {
         execution: true

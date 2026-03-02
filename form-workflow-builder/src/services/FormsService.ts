@@ -1,7 +1,17 @@
 import api from './api';
-import type { FormSchema } from '../types';
+import type { FormSchema, FieldDefinition } from '../types';
+
+export interface GenerateFormWithAIResponse {
+  fields: FieldDefinition[];
+  suggestedName: string;
+}
 
 export const formsService = {
+  async generateFormWithAI(prompt: string): Promise<GenerateFormWithAIResponse> {
+    const response = await api.post<GenerateFormWithAIResponse>('/forms/generate', { prompt });
+    return response.data;
+  },
+
   async getAllForms(): Promise<FormSchema[]> {
     const response = await api.get('/forms');
     return response.data.map((f: any) => ({

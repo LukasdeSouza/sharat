@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/AuthService';
-import { BiLogIn } from 'react-icons/bi';
 import NotionAvatar from '../assets/notion-avatar.png'
 
 export default function LoginPage() {

@@ -11,6 +11,7 @@ import RegisterPage from './pages/Register';
 import PublicForm from './pages/PublicForm';
 import FormList from './pages/FormList';
 import WorkflowList from './pages/WorkflowList';
+import MyTasks from './pages/MyTasks';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
           <Route path="preview/:formId" element={<FormPreview />} />
           <Route path="submissions" element={<Submissions />} />
           <Route path="users" element={<Users />} />
+          <Route path="my-tasks" element={<MyTasks />} />
         </Route>
       </Routes>
     </BrowserRouter>

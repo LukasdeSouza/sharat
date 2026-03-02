@@ -8,7 +8,7 @@ import FieldLibrary from '../components/builder/FieldLibrary';
 import FormCanvas from '../components/builder/FormCanvas';
 import FieldConfigPanel from '../components/builder/FieldConfigPanel';
 import { useToast, ToastContainer } from '../components/Toast';
-import { BiSave, BiChevronLeft, BiLoaderAlt, BiGlobe, BiLockAlt, BiCopy, BiCheckDouble } from 'react-icons/bi';
+import { BiSave, BiChevronLeft, BiLoaderAlt, BiGlobe, BiCopy, BiCheckDouble, BiBot } from 'react-icons/bi';
 
 export default function FormBuilder() {
   const navigate = useNavigate();
@@ -27,6 +27,9 @@ export default function FormBuilder() {
   const [isSaving, setIsSaving] = useState(false);
 
   const [linkCopied, setLinkCopied] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
 
   // Load existing form if editing
   useEffect(() => {
@@ -143,6 +146,22 @@ export default function FormBuilder() {
   const handleFieldDelete = (fieldId: string) => {
     setFields(fields.filter(f => f.id !== fieldId));
     if (selectedFieldId === fieldId) setSelectedFieldId(null);
+  };
+
+  const handleGenerateWithAI = async () => {
+    try {
+      setAiLoading(true);
+      const { fields: aiFields, suggestedName } = await formsService.generateFormWithAI(aiPrompt || 'A simple form');
+      setFields(aiFields);
+      setFormName(suggestedName);
+      setShowAiModal(false);
+      setAiPrompt('');
+      toast.success('Form generated! You can edit the fields below.');
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to generate form');
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -286,6 +305,14 @@ export default function FormBuilder() {
                   <span>{isSaving ? 'Saving...' : 'Save'}</span>
                 </button>
                 <button
+                  type="button"
+                  onClick={() => setShowAiModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors font-medium border border-slate-200 hover:border-slate-300 rounded-lg"
+                >
+                  <BiBot className="w-5 h-5" />
+                  <span>Create with AI</span>
+                </button>
+                <button
                   onClick={() => navigate('/')}
                   className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors font-medium border border-transparent hover:border-slate-200 rounded-lg"
                 >
@@ -329,6 +356,52 @@ export default function FormBuilder() {
           onClose={() => setSelectedFieldId(null)}
         />
       </div>
+
+      {/* Create with AI modal */}
+      {showAiModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => !aiLoading && setShowAiModal(false)}>
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 p-6 border border-slate-200" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-2 mb-4">
+              <BiBot className="w-6 h-6 text-slate-700" />
+              <h2 className="text-lg font-bold text-slate-800">Create form with AI</h2>
+            </div>
+            <p className="text-sm text-slate-500 mb-3">
+              Describe the form you want. For example: &quot;Contact form with name, email and message&quot; or &quot;Event registration with name, email, phone and dietary preferences dropdown&quot;.
+            </p>
+            {fields.length > 0 && (
+              <p className="text-sm text-slate-600 bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 mb-3">
+                Generating will replace the current {fields.length} field{fields.length !== 1 ? 's' : ''}.
+              </p>
+            )}
+            <textarea
+              value={aiPrompt}
+              onChange={e => setAiPrompt(e.target.value)}
+              placeholder="e.g. Contact form with name, email and message"
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-transparent resize-none"
+              rows={4}
+              disabled={aiLoading}
+            />
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                type="button"
+                onClick={() => !aiLoading && setShowAiModal(false)}
+                className="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleGenerateWithAI}
+                disabled={aiLoading}
+                className="flex items-center gap-2 px-5 py-2 bg-black text-white rounded-lg hover:bg-slate-800 font-medium disabled:opacity-50"
+              >
+                {aiLoading ? <BiLoaderAlt className="w-5 h-5 animate-spin" /> : <BiBot className="w-5 h-5" />}
+                {aiLoading ? 'Generating...' : 'Generate'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

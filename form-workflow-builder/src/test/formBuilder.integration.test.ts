@@ -174,6 +174,7 @@ describe('Form Builder Integration Tests - Checkpoint 7', () => {
         backgroundColor: '#ffffff',
         fontFamily: 'Inter, system-ui, sans-serif'
       },
+      isPublished: false,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -236,6 +237,7 @@ describe('Form Builder Integration Tests - Checkpoint 7', () => {
         backgroundColor: '#ffffff',
         fontFamily: 'Arial'
       },
+      isPublished: false,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -304,6 +306,7 @@ describe('Form Builder Integration Tests - Checkpoint 7', () => {
         backgroundColor: '#ffffff',
         fontFamily: 'Arial'
       },
+      isPublished: false,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -395,6 +398,7 @@ describe('Form Builder Integration Tests - Checkpoint 7', () => {
         fontFamily: 'Courier New'
       },
       workflowId: 'test-workflow-id',
+      isPublished: false,
       createdAt: new Date('2024-01-15T10:30:00Z'),
       updatedAt: new Date('2024-01-15T10:30:00Z')
     };
@@ -443,6 +447,7 @@ describe('Form Builder Integration Tests - Checkpoint 7', () => {
         backgroundColor: '#ffffff',
         fontFamily: 'Arial'
       },
+      isPublished: false,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -507,6 +512,7 @@ describe('Form Builder Integration Tests - Checkpoint 7', () => {
         backgroundColor: '#ffffff',
         fontFamily: 'Arial'
       },
+      isPublished: false,
       createdAt: new Date(),
       updatedAt: new Date()
     };

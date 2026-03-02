@@ -112,9 +112,10 @@ export default function PublicForm() {
         </div>
       </div>
 
-      <div className="mt-8 text-center text-slate-400 text-xs flex items-center gap-2">
+      <div className="flex flex-col items-center mt-8 text-center text-slate-400 text-xs gap-2">
         <span>Powered by</span>
-        <span className="font-bold tracking-tight text-slate-500">Form Build</span>
+        <span className="font-bold tracking-tight text-slate-500 text-lg">Form Builder PRO</span>
+        <button className='bg-black text-white font-light p-3 rounded-md hover:scale-95 transition-all ease-in-out delay-75 cursor-pointer'>create my own form for FREE</button>
       </div>
     </div>
   );

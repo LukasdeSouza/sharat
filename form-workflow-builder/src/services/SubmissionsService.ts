@@ -5,6 +5,7 @@ export interface FormSubmission {
   data: Record<string, any>;
   workflowStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
   submittedAt: string;
+  submittedBy: string;
   updatedAt: string;
   formId: string;
   execution?: {
@@ -24,6 +25,18 @@ export interface SubmissionsResponse {
 }
 
 export const submissionsService = {
+  async getSubmissions(formId: string): Promise<FormSubmission[]> {
+    const response = await api.get(`/submissions/form/${formId}`, {
+      params: { limit: 1000 }
+    });
+    return response.data.data;
+  },
+
+  async getMyTasks(): Promise<FormSubmission[]> {
+    const response = await api.get('/submissions/my-tasks');
+    return response.data;
+  },
+
   async getSubmissionsByForm(
     formId: string,
     limit: number = 50,

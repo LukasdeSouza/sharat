@@ -1,26 +1,67 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { FormSchema, WorkflowDefinition } from '../types';
 import { formsService } from '../services/FormsService';
 import { workflowsService } from '../services/WorkflowsService';
-import { BiTrash, BiGitBranch, BiPlus, BiEdit, BiCheckDouble, BiShareAlt, BiGlobe, BiLockAlt } from 'react-icons/bi';
-import { BsEye } from 'react-icons/bs';
-import NotionAvatar from '../assets/notion-avatar.png'
+import { statsService, type TenantStats } from '../services/StatsService';
+import { BiTrash, BiGitBranch, BiPlus, BiEdit, BiCheckDouble, BiShareAlt, BiGlobe, BiLockAlt, BiUser, BiSpreadsheet, BiGitMerge } from 'react-icons/bi';
+import { BsEye, BsInbox } from 'react-icons/bs';
+import NotionAvatar from '../assets/notion-avatar.png';
 import { PiEmpty } from 'react-icons/pi';
 import { MdBlurCircular } from 'react-icons/md';
 import { useToast, ToastContainer } from '../components/Toast';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+} from 'recharts';
+
+const STATS_DAYS = 14;
+
+function fillSubmissionsByDay(data: { date: string; count: number }[], days: number): { date: string; count: number }[] {
+  const byDate = new Map(data.map((d) => [d.date, d.count]));
+  const result: { date: string; count: number }[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    result.push({ date: key, count: byDate.get(key) ?? 0 });
+  }
+  return result;
+}
 
 export default function Home() {
   const navigate = useNavigate();
   const toast = useToast();
   const [forms, setForms] = useState<FormSchema[]>([]);
   const [workflows, setWorkflows] = useState<Map<string, WorkflowDefinition>>(new Map());
+  const [stats, setStats] = useState<TenantStats | null>(null);
   const [hoveredFormId, setHoveredFormId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const chartData = useMemo(
+    () => (stats ? fillSubmissionsByDay(stats.submissionsByDay, STATS_DAYS) : []),
+    [stats]
+  );
 
   useEffect(() => {
     loadForms();
   }, []);
+
+  const loadStats = async () => {
+    try {
+      const data = await statsService.getStats(STATS_DAYS);
+      setStats(data);
+    } catch {
+      setStats(null);
+    }
+  };
 
   const loadForms = async () => {
     try {
@@ -38,6 +79,7 @@ export default function Home() {
         } catch (err) { }
       }
       setWorkflows(workflowMap);
+      await loadStats();
     } catch (err) {
       toast.error('Failed to load forms');
     } finally {
@@ -112,6 +154,115 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Account Overview */}
+      <div className="max-w-7xl mx-auto px-6 py-10">
+        <h2 className="text-2xl font-semibold text-slate-800 mb-6">Account overview</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 hover:scale-95 transition-all ease-in-out">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-slate-200 rounded-lg text-slate-800">
+                <BsInbox className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-800">{stats?.submissions ?? '—'}</p>
+                <p className="text-sm text-slate-500 font-medium">Submissions</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 hover:scale-95 transition-all ease-in-out">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-slate-200 rounded-lg text-slate-800">
+                <BiUser className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-800">{stats?.users ?? '—'}</p>
+                <p className="text-sm text-slate-500 font-medium">Users</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 hover:scale-95 transition-all ease-in-out">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-slate-200 rounded-lg text-slate-800">
+                <BiSpreadsheet className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-800">{stats?.forms ?? '—'}</p>
+                <p className="text-sm text-slate-500 font-medium">Forms</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 hover:scale-95 transition-all ease-in-out">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-slate-200 rounded-lg text-slate-800">
+                <BiGitMerge className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-800">{stats?.workflows ?? '—'}</p>
+                <p className="text-sm text-slate-500 font-medium">Workflows</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-10">
+          <div className="bg-white border border-slate-200 rounded-xl p-6">
+            <h3 className="text-sm font-bold text-slate-700 mb-4">Submissions in the last {STATS_DAYS} days</h3>
+            <div className="h-[240px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorSubmissions" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#0f172a" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#0f172a" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 11, fill: '#64748b' }}
+                    tickFormatter={(v) => new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#64748b' }} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', backgroundColor: '#fff' }}
+                    labelFormatter={(v) => new Date(v).toLocaleDateString()}
+                  />
+                  <Area type="monotone" dataKey="count" stroke="#0f172a" strokeWidth={2} fill="url(#colorSubmissions)" name="Submissions" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          <div className="bg-white border border-slate-200 rounded-xl p-6">
+            <h3 className="text-sm font-bold text-slate-700 mb-4">Submissions by form</h3>
+            <div className="h-[240px]">
+              {stats?.submissionsByForm && stats.submissionsByForm.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={stats.submissionsByForm}
+                    layout="vertical"
+                    margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#64748b' }} />
+                    <YAxis
+                      type="category"
+                      dataKey="formName"
+                      width={120}
+                      tick={{ fontSize: 11, fill: '#64748b' }}
+                      tickFormatter={(v) => (v.length > 18 ? v.slice(0, 18) + '…' : v)}
+                    />
+                    <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', backgroundColor: '#fff' }} />
+                    <Bar dataKey="count" fill="#0f172a" radius={[0, 4, 4, 0]} name="Submissions" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-slate-400 text-sm">No submissions per form yet</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-12">
         {forms.length === 0 ? (
@@ -148,7 +299,7 @@ export default function Home() {
                     {form.isPublished ? (
                       <div className="flex items-center gap-1.5 px-2 py-1 bg-green-50 text-green-600 rounded-full text-[10px] font-bold tracking-wider uppercase border border-green-100">
                         <BiGlobe className="w-3 h-3" />
-                        Live
+                        Published
                       </div>
                     ) : (
                       <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 text-slate-400 rounded-full text-[10px] font-bold tracking-wider uppercase border border-slate-100">

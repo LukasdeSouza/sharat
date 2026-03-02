@@ -4,6 +4,7 @@ import type { User, Role } from '../types';
 import { authService } from '../services/AuthService';
 import { BiTrash, BiUserPlus, BiGroup, BiShield } from 'react-icons/bi';
 import { useNavigate } from 'react-router-dom';
+import NotionNoPermission from '../assets/avatartion_2.png'
 
 export default function Users() {
   const navigate = useNavigate();
@@ -121,14 +122,18 @@ export default function Users() {
   if (error && !users.length) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
-          <h2 className="text-red-800 font-bold text-xl mb-2">Access Error</h2>
-          <p className="text-red-600 mb-6">{error}</p>
+        <div className="flex flex-col items-center  gap-4 bg-white border border-slate-200 rounded-lg p-8 text-center">
+          <img src={NotionNoPermission} alt="" width={100} />
+          <h1 className="text-slate-800 font-semibold text-xl2 mb-2">Sorry, friend.</h1>
+          <div className='flex flex-col items-center'>
+            <p className="text-slate-600 font-light">{error}</p>
+            <span className='text-light text-slate-500'>you don't have enough permissions for it.</span>
+          </div>
           <button
             onClick={() => navigate('/')}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            className="px-4 py-2 bg-slate-600 text-white font-light rounded-lg hover:bg-slate-700 transition-colors"
           >
-            Go Back Home
+            Return
           </button>
         </div>
       </div>
