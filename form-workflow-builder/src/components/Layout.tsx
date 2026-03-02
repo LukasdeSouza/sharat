@@ -11,7 +11,7 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  // const [userRole, setUserRole] = useState<string | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -36,7 +36,7 @@ export default function Layout() {
 
       if (user) {
         setUserEmail(user.email);
-        setUserRole(user.role);
+        // setUserRole(user.role);
       }
     };
     loadUser();
@@ -102,13 +102,13 @@ export default function Layout() {
     { name: 'Workflows', icon: BiGitBranch, path: '/workflows' },
     { name: 'My Tasks', icon: BiTask, path: '/my-tasks' },
     { name: 'Submissions', icon: BiCheckDouble, path: '/submissions' },
-    // { name: 'Team', icon: BiCheckDouble, path: '/users' },
+    { name: 'Team & Access', icon: BiGroup, path: '/users' }
   ];
 
   // Only show Team management for Admins
-  if (userRole === 'admin' || userRole === 'ADMIN') {
-    navItems.push({ name: 'Team & Access', icon: BiGroup, path: '/users' });
-  }
+  // if (userRole === 'admin' || userRole === 'ADMIN') {
+  //   navItems.push({ name: 'Team & Access', icon: BiGroup, path: '/users' });
+  // }
 
   const isActive = (path: string) => {
     if (path === '/') {
