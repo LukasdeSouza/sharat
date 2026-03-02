@@ -119,26 +119,26 @@ export default function Users() {
     );
   }
 
-  if (error && !users.length) {
-    return (
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="flex flex-col items-center  gap-4 bg-white border border-slate-200 rounded-lg p-8 text-center">
-          <img src={NotionNoPermission} alt="" width={100} />
-          <h1 className="text-slate-800 font-semibold text-xl2 mb-2">Sorry, friend.</h1>
-          <div className='flex flex-col items-center'>
-            <p className="text-slate-600 font-light">{error}</p>
-            <span className='text-light text-slate-500'>you don't have enough permissions for it.</span>
-          </div>
-          <button
-            onClick={() => navigate('/')}
-            className="px-4 py-2 bg-slate-600 text-white font-light rounded-lg hover:bg-slate-700 transition-colors"
-          >
-            Return
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // if (error && !users.length) {
+  //   return (
+  //     <div className="max-w-7xl mx-auto px-6 py-12">
+  //       <div className="flex flex-col items-center  gap-4 bg-white border border-slate-200 rounded-lg p-8 text-center">
+  //         <img src={NotionNoPermission} alt="" width={100} />
+  //         <h1 className="text-slate-800 font-semibold text-xl2 mb-2">Sorry, friend.</h1>
+  //         <div className='flex flex-col items-center'>
+  //           <p className="text-slate-600 font-light">{error}</p>
+  //           <span className='text-light text-slate-500'>you don't have enough permissions for it.</span>
+  //         </div>
+  //         <button
+  //           onClick={() => navigate('/')}
+  //           className="px-4 py-2 bg-slate-600 text-white font-light rounded-lg hover:bg-slate-700 transition-colors"
+  //         >
+  //           Return
+  //         </button>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="min-h-screen bg-white">
