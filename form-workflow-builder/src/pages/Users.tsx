@@ -3,14 +3,14 @@ import { usersService } from '../services/UsersService';
 import type { User, Role } from '../types';
 import { authService } from '../services/AuthService';
 import { BiTrash, BiUserPlus, BiGroup, BiShield } from 'react-icons/bi';
-import { useNavigate } from 'react-router-dom';
-import NotionNoPermission from '../assets/avatartion_2.png'
+// import { useNavigate } from 'react-router-dom';
+// import NotionNoPermission from '../assets/avatartion_2.png'
 
 export default function Users() {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   // Form state
@@ -39,14 +39,14 @@ export default function Users() {
       setCurrentUser(user);
 
       if (!user || (user.role !== 'ADMIN' && user.role !== 'admin')) {
-        setError('Access denied. Admin only.');
+        // setError('Access denied. Admin only.');
         setLoading(false);
         return;
       }
 
       loadUsers();
     } catch (err) {
-      setError('Failed to load user info');
+      // setError('Failed to load user info');
       setLoading(false);
     }
   };
@@ -57,7 +57,7 @@ export default function Users() {
       const data = await usersService.getUsers();
       setUsers(data);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to load users');
+      // setError(err.response?.data?.error || 'Failed to load users');
     } finally {
       setLoading(false);
     }
